@@ -1,141 +1,91 @@
 let cart = [];
 let total = 0;
 
-// Инициализация Telegram Web App
+// Инициализация Telegram WebApp
 if (window.Telegram.WebApp) {
     const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.MainButton.setText(`Оформить заказ (0 ₽)`).show();
     
-    // Применение темы Telegram
-    const applyTheme = () => {
-        const theme = tg.themeParams;
-        document.body.style.backgroundColor = theme.bg_color || '#ffffff';
-        document.body.style.color = theme.text_color || '#000000';
-        document.querySelector('.container').style.backgroundColor = theme.secondary_bg_color || '#f0f0f0';
+    // Динамическое обновление кнопки
+    const updateMainButton = () => {
+        tg.MainButton.setText(`Оформить заказ (${total} ₽)`);
     };
-
-    // Обработчик изменения темы
-    tg.onEvent('themeChanged', applyTheme);
-    applyTheme();
-
-    // Показываем основную кнопку
-    tg.MainButton.setText('Оформить заказ').show();
-    tg.MainButton.onClick(() => placeOrder());
+    
+    // Обработчик темы
+    document.body.style.backgroundColor = tg.themeParams.bg_color || '#ffffff';
 }
 
-// Добавление в корзину (исправленная версия)
+// Добавление в корзину (исправлено)
 window.addToCart = (name, price) => {
-    try {
-        // Проверка на дубликаты
-        const existingItem = cart.find(item => item.name === name);
-        if (existingItem) {
-            existingItem.quantity++; // Увеличиваем количество, если товар уже в корзине
-        } else {
-            // Создаём новый объект товара
-            const newItem = {
-                id: Date.now(), // Уникальный идентификатор
-                name: name,
-                price: price,
-                quantity: 1
-            };
-            cart.push(newItem);
-        }
-
-        total += price;
-        updateCart();
-        showNotification(`✅ ${name} добавлен в корзину!`);
-    } catch (error) {
-        console.error('Ошибка добавления в корзину:', error);
-        showNotification('⚠️ Ошибка добавления товара');
-    }
-};
-
-// Удаление из корзины
-window.removeFromCart = (index) => {
-    const item = cart[index];
-    if (item.quantity > 1) {
-        item.quantity--; // Уменьшаем количество, если товар добавлен несколько раз
+    const existing = cart.find(item => item.name === name);
+    if (existing) {
+        existing.quantity++;
     } else {
-        cart.splice(index, 1); // Удаляем товар полностью
+        cart.push({ name, price, quantity: 1 });
     }
-    total -= item.price;
+    
+    total += price;
     updateCart();
-    showNotification(`❌ ${item.name} удалён из корзины`);
+    showTempAlert(`✅ ${name} добавлен`);
 };
 
-// Обновление корзины
+// Обновление корзины (исправлено)
 const updateCart = () => {
-    const cartList = document.getElementById('cart');
+    const cartElement = document.getElementById('cart');
     const totalElement = document.getElementById('total');
     
-    cartList.innerHTML = '';
-    cart.forEach((item, index) => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-            <span>${item.name} (x${item.quantity}) - ${item.price * item.quantity} руб.</span>
-            <button onclick="removeFromCart(${index})" class="danger">Удалить</button>
-        `;
-        cartList.appendChild(li);
-    });
-    
-    totalElement.textContent = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    cartElement.innerHTML = cart.map(item => `
+        <li class="cart-item">
+            ${item.name} 
+            <span class="quantity-controller">
+                <button onclick="changeQuantity('${item.name}', -1)">-</button>
+                <span>${item.quantity}</span>
+                <button onclick="changeQuantity('${item.name}', 1)">+</button>
+            </span>
+            <span>${item.price * item.quantity} ₽</span>
+        </li>
+    `).join('');
+
+    totalElement.textContent = total;
     
     if (window.Telegram.WebApp) {
-        const tg = window.Telegram.WebApp;
-        tg.MainButton.setText(`Оформить заказ (${total} руб.)`);
+        window.Telegram.WebApp.MainButton.setText(`Оформить заказ (${total} ₽)`);
     }
+};
+
+// Изменение количества
+window.changeQuantity = (name, delta) => {
+    const item = cart.find(i => i.name === name);
+    if (!item) return;
+
+    item.quantity += delta;
+    total += delta * item.price;
+    
+    if (item.quantity < 1) {
+        cart = cart.filter(i => i !== item);
+    }
+    
+    updateCart();
+    showTempAlert(`✏️ Количество изменено`);
 };
 
 // Очистка корзины
 window.clearCart = () => {
-    if (cart.length === 0) return;
     cart = [];
     total = 0;
     updateCart();
-    showNotification('🧹 Корзина очищена');
+    showTempAlert('🧹 Корзина очищена');
 };
 
-// Оформление заказа
-window.placeOrder = () => {
-    if (cart.length === 0) {
-        showNotification('⚠️ Корзина пуста!');
-        return;
-    }
-
-    const loader = document.getElementById('loader');
-    loader.style.display = 'block';
-
-    setTimeout(() => {
-        const order = cart.map(item => 
-            `${item.name} (x${item.quantity}) - ${item.price * item.quantity} руб.`
-        ).join('\n');
-
-        const orderData = {
-            order: order,
-            total: total,
-            user: window.Telegram.WebApp.initDataUnsafe.user
-        };
-
-        if (window.Telegram.WebApp) {
-            window.Telegram.WebApp.sendData(JSON.stringify(orderData));
-            window.Telegram.WebApp.close();
-        } else {
-            alert(`Ваш заказ:\n${order}\n\nИтого: ${total} руб.`);
-        }
-
-        loader.style.display = 'none';
-        clearCart();
-    }, 2000);
-};
-
-// Показать уведомление
-const showNotification = (message) => {
-    const notification = document.createElement('div');
-    notification.className = 'notification';
-    notification.textContent = message;
-    document.body.appendChild(notification);
+// Уведомления
+const showTempAlert = (msg) => {
+    const alert = document.createElement('div');
+    alert.className = 'temp-alert';
+    alert.textContent = msg;
+    document.body.appendChild(alert);
     
     setTimeout(() => {
-        notification.style.opacity = '0';
-        setTimeout(() => notification.remove(), 300);
+        alert.remove();
     }, 2000);
 };
