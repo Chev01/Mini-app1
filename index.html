@@ -1,11 +1,21 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>Мой первый Mini App</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Меню кофейны</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Привет, мир!</h1>
-    <p>Это мой первый Mini App.</p>
-    <button>Нажми меня</button>
+    <div class="container">
+        <h1>Меню кофейны</h1>
+        <div id="menu">
+            <!-- Напитки будут добавлены через JavaScript -->
+        </div>
+        <h2>Корзина</h2>
+        <ul id="cart"></ul>
+        <p>Итого: <span id="total">0</span> руб.</p>
+    </div>
+    <script src="app.js"></script>
 </body>
 </html>
