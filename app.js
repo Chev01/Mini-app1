@@ -1,20 +1,18 @@
-if (window.Telegram.WebApp) {
-    const tg = window.Telegram.WebApp;
+// Меню кофейны
+const menu = [
+    { name: "Эспрессо", price: 150 },
+    { name: "Капучино", price: 200 },
+    { name: "Латте", price: 220 },
+    { name: "Американо", price: 180 },
+    { name: "Мокачино", price: 250 },
+];
 
-    // Меню кофейны
-    const menu = [
-        { name: "Эспрессо", price: 150 },
-        { name: "Капучино", price: 200 },
-        { name: "Латте", price: 220 },
-        { name: "Американо", price: 180 },
-        { name: "Мокачино", price: 250 },
-    ];
+// Корзина
+let cart = [];
+let total = 0;
 
-    // Корзина
-    let cart = [];
-    let total = 0;
-
-    // Отображаем меню
+// Инициализация меню
+document.addEventListener('DOMContentLoaded', () => {
     const menuContainer = document.getElementById('menu');
     menu.forEach(item => {
         const div = document.createElement('div');
@@ -25,24 +23,29 @@ if (window.Telegram.WebApp) {
         `;
         menuContainer.appendChild(div);
     });
+});
 
-    // Функция добавления в корзину
-    window.addToCart = (name, price) => {
-        cart.push({ name, price });
-        total += price;
-        updateCart();
-    };
+// Функции для работы с корзиной
+window.addToCart = (name, price) => {
+    cart.push({ name, price });
+    total += price;
+    updateCart();
+};
 
-    // Обновляем корзину
-    const updateCart = () => {
-        const cartList = document.getElementById('cart');
-        const totalElement = document.getElementById('total');
-        cartList.innerHTML = '';
-        cart.forEach(item => {
-            const li = document.createElement('li');
-            li.textContent = `${item.name} - ${item.price} руб.`;
-            cartList.appendChild(li);
-        });
-        totalElement.textContent = total;
-    };
-}
+window.clearCart = () => {
+    cart = [];
+    total = 0;
+    updateCart();
+};
+
+const updateCart = () => {
+    const cartList = document.getElementById('cart');
+    const totalElement = document.getElementById('total');
+    cartList.innerHTML = '';
+    cart.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = `${item.name} - ${item.price} руб.`;
+        cartList.appendChild(li);
+    });
+    totalElement.textContent = total;
+};
