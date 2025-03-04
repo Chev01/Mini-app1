@@ -1,71 +1,44 @@
-<!<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Кофейня Telegram</title>
+    <title>Coffee House - Telegram Mini App</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>☕ Меню кофейни</h1>
-            <p class="subtitle">Выберите ваш любимый напиток</p>
+        <header class="header">
+            <h1 class="title">☕ Меню кофейни</h1>
+            <div class="badge">Выбор редакции</div>
         </header>
 
-        <div id="menu">
-            <div class="card" onclick="addToCart('Эспрессо', 150)">
-                <div class="card-content">
-                    <span class="icon">☕</span>
-                    <h3>Эспрессо</h3>
-                    <p>150 ₽</p>
-                </div>
-            </div>
-            <div class="card" onclick="addToCart('Капучино', 200)">
-                <div class="card-content">
-                    <span class="icon">🥛</span>
-                    <h3>Капучино</h3>
-                    <p>200 ₽</p>
-                </div>
-            </div>
-            <div class="card" onclick="addToCart('Латте', 220)">
-                <div class="card-content">
-                    <span class="icon">🍵</span>
-                    <h3>Латте</h3>
-                    <p>220 ₽</p>
-                </div>
-            </div>
-            <div class="card" onclick="addToCart('Американо', 180)">
-                <div class="card-content">
-                    <span class="icon">☕</span>
-                    <h3>Американо</h3>
-                    <p>180 ₽</p>
-                </div>
-            </div>
-            <div class="card" onclick="addToCart('Мокачино', 250)">
-                <div class="card-content">
-                    <span class="icon">🍫</span>
-                    <h3>Мокачино</h3>
-                    <p>250 ₽</p>
-                </div>
-            </div>
+        <div class="menu-grid" id="menu">
+            <!-- Карточки будут добавлены через JavaScript -->
         </div>
 
-        <div class="cart-section">
-            <h2>🛒 Корзина</h2>
-            <ul id="cart"></ul>
-            <div class="total">
-                <span>Итого:</span>
-                <span id="total">0 ₽</span>
+        <div class="cart">
+            <div class="cart-header">
+                <h2>🛒 Ваша корзина</h2>
+                <button class="clear-btn" onclick="clearCart()">Очистить всё</button>
             </div>
-            <div class="actions">
-                <button onclick="clearCart()" class="btn danger">Очистить корзину</button>
-                <button onclick="placeOrder()" class="btn success">Оформить заказ</button>
+            
+            <div class="cart-items" id="cart"></div>
+            
+            <div class="cart-footer">
+                <div class="total">
+                    <span>Итого:</span>
+                    <span id="total">0 ₽</span>
+                </div>
+                <button class="order-btn" onclick="placeOrder()">
+                    <span>Оформить заказ</span>
+                    <div class="loader" id="loader"></div>
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="loader" class="loader"></div>
+    <div class="notification" id="notification"></div>
     <script src="app.js"></script>
 </body>
 </html>

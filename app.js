@@ -1,24 +1,41 @@
+// Инициализация приложения
+const menuItems = [
+    { icon: '☕', name: 'Эспрессо', price: 150 },
+    { icon: '🥛', name: 'Капучино', price: 200 },
+    { icon: '🍵', name: 'Латте', price: 220 },
+    { icon: '☕', name: 'Американо', price: 180 },
+    { icon: '🍫', name: 'Мокачино', price: 250 }
+];
+
 let cart = [];
 let total = 0;
 
 // Инициализация Telegram WebApp
-if (window.Telegram.WebApp) {
-    const tg = window.Telegram.WebApp;
+const tg = window.Telegram?.WebApp;
+if (tg) {
     tg.expand();
     tg.MainButton.setText(`Оформить заказ (0 ₽)`).show();
-    
-    // Динамическое обновление кнопки
-    const updateMainButton = () => {
-        tg.MainButton.setText(`Оформить заказ (${total} ₽)`);
-    };
-    
-    // Обработчик темы
     document.body.style.backgroundColor = tg.themeParams.bg_color || '#ffffff';
 }
 
-// Добавление в корзину (исправлено)
-window.addToCart = (name, price) => {
+// Генерация меню
+function initMenu() {
+    const menuContainer = document.getElementById('menu');
+    menuContainer.innerHTML = menuItems.map(item => `
+        <div class="menu-item" onclick="addToCart('${item.name}', ${item.price})">
+            <div class="item-content">
+                <div class="item-icon">${item.icon}</div>
+                <h3 class="item-title">${item.name}</h3>
+                <p class="item-price">${item.price} ₽</p>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Работа с корзиной
+function addToCart(name, price) {
     const existing = cart.find(item => item.name === name);
+    
     if (existing) {
         existing.quantity++;
     } else {
@@ -27,35 +44,33 @@ window.addToCart = (name, price) => {
     
     total += price;
     updateCart();
-    showTempAlert(`✅ ${name} добавлен`);
-};
+    showNotification(`Добавлено: ${name}`);
+}
 
-// Обновление корзины (исправлено)
-const updateCart = () => {
-    const cartElement = document.getElementById('cart');
+function updateCart() {
+    const cartContainer = document.getElementById('cart');
     const totalElement = document.getElementById('total');
     
-    cartElement.innerHTML = cart.map(item => `
-        <li class="cart-item">
-            ${item.name} 
-            <span class="quantity-controller">
-                <button onclick="changeQuantity('${item.name}', -1)">-</button>
+    cartContainer.innerHTML = cart.map(item => `
+        <div class="cart-item">
+            <span>${item.name}</span>
+            <div class="quantity-controls">
+                <button class="quantity-btn" onclick="adjustQuantity('${item.name}', -1)">-</button>
                 <span>${item.quantity}</span>
-                <button onclick="changeQuantity('${item.name}', 1)">+</button>
-            </span>
+                <button class="quantity-btn" onclick="adjustQuantity('${item.name}', 1)">+</button>
+            </div>
             <span>${item.price * item.quantity} ₽</span>
-        </li>
+        </div>
     `).join('');
 
-    totalElement.textContent = total;
+    totalElement.textContent = `${cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)} ₽`;
     
-    if (window.Telegram.WebApp) {
-        window.Telegram.WebApp.MainButton.setText(`Оформить заказ (${total} ₽)`);
+    if (tg) {
+        tg.MainButton.setText(`Оформить заказ (${total} ₽)`);
     }
-};
+}
 
-// Изменение количества
-window.changeQuantity = (name, delta) => {
+function adjustQuantity(name, delta) {
     const item = cart.find(i => i.name === name);
     if (!item) return;
 
@@ -67,25 +82,60 @@ window.changeQuantity = (name, delta) => {
     }
     
     updateCart();
-    showTempAlert(`✏️ Количество изменено`);
-};
+    showNotification(`Количество изменено: ${name}`);
+}
 
-// Очистка корзины
-window.clearCart = () => {
+function clearCart() {
     cart = [];
     total = 0;
     updateCart();
-    showTempAlert('🧹 Корзина очищена');
-};
+    showNotification('Корзина очищена');
+}
 
-// Уведомления
-const showTempAlert = (msg) => {
-    const alert = document.createElement('div');
-    alert.className = 'temp-alert';
-    alert.textContent = msg;
-    document.body.appendChild(alert);
+// Оформление заказа
+async function placeOrder() {
+    if (cart.length === 0) {
+        showNotification('Корзина пуста!');
+        return;
+    }
+
+    const loader = document.querySelector('.loader');
+    const orderBtn = document.querySelector('.order-btn');
+    
+    orderBtn.disabled = true;
+    loader.style.display = 'block';
+
+    try {
+        // Имитация отправки данных
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        if (tg) {
+            tg.sendData(JSON.stringify({
+                order: cart,
+                total: total
+            }));
+            tg.close();
+        } else {
+            alert('Заказ успешно оформлен!');
+            clearCart();
+        }
+    } finally {
+        orderBtn.disabled = false;
+        loader.style.display = 'none';
+    }
+}
+
+// Вспомогательные функции
+function showNotification(text) {
+    const notification = document.getElementById('notification');
+    notification.textContent = text;
+    notification.classList.add('show');
     
     setTimeout(() => {
-        alert.remove();
+        notification.classList.remove('show');
     }, 2000);
-};
+}
+
+// Инициализация
+initMenu();
+updateCart();
