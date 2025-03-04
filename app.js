@@ -22,20 +22,44 @@ if (window.Telegram.WebApp) {
     tg.MainButton.onClick(() => placeOrder());
 }
 
-// Добавление в корзину
+// Добавление в корзину (исправленная версия)
 window.addToCart = (name, price) => {
-    cart.push({ name, price });
-    total += price;
-    updateCart();
-    showNotification(`✅ ${name} добавлен в корзину!`);
+    try {
+        // Проверка на дубликаты
+        const existingItem = cart.find(item => item.name === name);
+        if (existingItem) {
+            existingItem.quantity++; // Увеличиваем количество, если товар уже в корзине
+        } else {
+            // Создаём новый объект товара
+            const newItem = {
+                id: Date.now(), // Уникальный идентификатор
+                name: name,
+                price: price,
+                quantity: 1
+            };
+            cart.push(newItem);
+        }
+
+        total += price;
+        updateCart();
+        showNotification(`✅ ${name} добавлен в корзину!`);
+    } catch (error) {
+        console.error('Ошибка добавления в корзину:', error);
+        showNotification('⚠️ Ошибка добавления товара');
+    }
 };
 
 // Удаление из корзины
 window.removeFromCart = (index) => {
-    total -= cart[index].price;
-    cart.splice(index, 1);
+    const item = cart[index];
+    if (item.quantity > 1) {
+        item.quantity--; // Уменьшаем количество, если товар добавлен несколько раз
+    } else {
+        cart.splice(index, 1); // Удаляем товар полностью
+    }
+    total -= item.price;
     updateCart();
-    showNotification(`❌ Товар удалён из корзины`);
+    showNotification(`❌ ${item.name} удалён из корзины`);
 };
 
 // Обновление корзины
@@ -47,13 +71,13 @@ const updateCart = () => {
     cart.forEach((item, index) => {
         const li = document.createElement('li');
         li.innerHTML = `
-            <span>${item.name} - ${item.price} руб.</span>
+            <span>${item.name} (x${item.quantity}) - ${item.price * item.quantity} руб.</span>
             <button onclick="removeFromCart(${index})" class="danger">Удалить</button>
         `;
         cartList.appendChild(li);
     });
     
-    totalElement.textContent = total;
+    totalElement.textContent = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
     if (window.Telegram.WebApp) {
         const tg = window.Telegram.WebApp;
@@ -82,7 +106,7 @@ window.placeOrder = () => {
 
     setTimeout(() => {
         const order = cart.map(item => 
-            `${item.name} - ${item.price} руб.`
+            `${item.name} (x${item.quantity}) - ${item.price * item.quantity} руб.`
         ).join('\n');
 
         const orderData = {
