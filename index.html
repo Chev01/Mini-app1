@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -8,37 +8,60 @@
 </head>
 <body>
     <div class="container">
-        <h1>☕ Меню кофейни</h1>
+        <header>
+            <h1>☕ Меню кофейни</h1>
+            <p class="subtitle">Выберите ваш любимый напиток</p>
+        </header>
+
         <div id="menu">
-            <div class="item">
-                <span>☕ Эспрессо - 150 руб.</span>
-                <button onclick="addToCart('Эспрессо', 150)">Добавить</button>
+            <div class="card" onclick="addToCart('Эспрессо', 150)">
+                <div class="card-content">
+                    <span class="icon">☕</span>
+                    <h3>Эспрессо</h3>
+                    <p>150 ₽</p>
+                </div>
             </div>
-            <div class="item">
-                <span>🥛 Капучино - 200 руб.</span>
-                <button onclick="addToCart('Капучино', 200)">Добавить</button>
+            <div class="card" onclick="addToCart('Капучино', 200)">
+                <div class="card-content">
+                    <span class="icon">🥛</span>
+                    <h3>Капучино</h3>
+                    <p>200 ₽</p>
+                </div>
             </div>
-            <div class="item">
-                <span>🍵 Латте - 220 руб.</span>
-                <button onclick="addToCart('Латте', 220)">Добавить</button>
+            <div class="card" onclick="addToCart('Латте', 220)">
+                <div class="card-content">
+                    <span class="icon">🍵</span>
+                    <h3>Латте</h3>
+                    <p>220 ₽</p>
+                </div>
             </div>
-            <div class="item">
-                <span>☕ Американо - 180 руб.</span>
-                <button onclick="addToCart('Американо', 180)">Добавить</button>
+            <div class="card" onclick="addToCart('Американо', 180)">
+                <div class="card-content">
+                    <span class="icon">☕</span>
+                    <h3>Американо</h3>
+                    <p>180 ₽</p>
+                </div>
             </div>
-            <div class="item">
-                <span>🍫 Мокачино - 250 руб.</span>
-                <button onclick="addToCart('Мокачино', 250)">Добавить</button>
+            <div class="card" onclick="addToCart('Мокачино', 250)">
+                <div class="card-content">
+                    <span class="icon">🍫</span>
+                    <h3>Мокачино</h3>
+                    <p>250 ₽</p>
+                </div>
             </div>
         </div>
 
-        <h2>🛒 Корзина</h2>
-        <ul id="cart"></ul>
-        <p>Итого: <span id="total">0</span> руб.</p>
-        
-        <div class="buttons">
-            <button onclick="clearCart()" class="danger">Очистить корзину</button>
-            <button onclick="placeOrder()" class="success">Оформить заказ</button>
+        <div class="cart-section">
+            <h2>🛒 Корзина</h2>
+            <ul id="cart"></ul>
+            <div class="total">
+                <span>Итого:</span>
+                <span id="total">0 ₽</span>
+            </div>
+            <div class="actions">
+                <button onclick="clearCart()" class="btn danger">Очистить корзину</button>
+                <button onclick="placeOrder()" class="btn success">Оформить заказ</button>
+            </div>
         </div>
     </div>
 
