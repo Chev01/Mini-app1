@@ -1,30 +1,42 @@
-// Инициализация приложения
 const menuItems = [
-    { icon: '☕', name: 'Эспрессо', price: 150 },
-    { icon: '🥛', name: 'Капучино', price: 200 },
-    { icon: '🍵', name: 'Латте', price: 220 },
-    { icon: '☕', name: 'Американо', price: 180 },
-    { icon: '🍫', name: 'Мокачино', price: 250 }
+    {
+        name: 'Капучино',
+        price: 250,
+        image: 'https://source.unsplash.com/random/800x600/?cappuccino'
+    },
+    {
+        name: 'Латте',
+        price: 280,
+        image: 'https://source.unsplash.com/random/800x600/?latte'
+    },
+    {
+        name: 'Эспрессо',
+        price: 200,
+        image: 'https://source.unsplash.com/random/800x600/?espresso'
+    },
+    {
+        name: 'Мокачино',
+        price: 300,
+        image: 'https://source.unsplash.com/random/800x600/?mocha'
+    }
 ];
 
-let cart = [];
+let cart = JSON.parse(localStorage.getItem('cart')) || [];
 let total = 0;
 
-// Инициализация Telegram WebApp
-const tg = window.Telegram?.WebApp;
-if (tg) {
-    tg.expand();
-    tg.MainButton.setText(`Оформить заказ (0 ₽)`).show();
-    document.body.style.backgroundColor = tg.themeParams.bg_color || '#ffffff';
+// Инициализация
+function init() {
+    renderMenu();
+    updateCartCounter();
+    setupEventListeners();
 }
 
-// Генерация меню
-function initMenu() {
+function renderMenu() {
     const menuContainer = document.getElementById('menu');
     menuContainer.innerHTML = menuItems.map(item => `
-        <div class="menu-item" onclick="addToCart('${item.name}', ${item.price})">
+        <div class="menu-item" data-item='${JSON.stringify(item)}'>
             <div class="item-content">
-                <div class="item-icon">${item.icon}</div>
+                <img src="${item.image}" alt="${item.name}" class="item-image">
                 <h3 class="item-title">${item.name}</h3>
                 <p class="item-price">${item.price} ₽</p>
             </div>
@@ -32,100 +44,60 @@ function initMenu() {
     `).join('');
 }
 
-// Работа с корзиной
-function addToCart(name, price) {
-    const existing = cart.find(item => item.name === name);
+function setupEventListeners() {
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            const product = JSON.parse(e.currentTarget.dataset.item);
+            addToCart(product);
+        });
+    });
+
+    document.getElementById('cartButton').addEventListener('click', toggleCart);
+    document.getElementById('closeCart').addEventListener('click', toggleCart);
+}
+
+function addToCart(item) {
+    const existing = cart.find(cartItem => cartItem.name === item.name);
     
     if (existing) {
         existing.quantity++;
     } else {
-        cart.push({ name, price, quantity: 1 });
+        cart.push({...item, quantity: 1});
     }
     
-    total += price;
+    total += item.price;
     updateCart();
-    showNotification(`Добавлено: ${name}`);
+    showNotification(`${item.name} добавлен в корзину`);
+    saveToLocalStorage();
 }
 
 function updateCart() {
-    const cartContainer = document.getElementById('cart');
-    const totalElement = document.getElementById('total');
+    const cartItems = document.getElementById('cartItems');
+    const totalElement = document.getElementById('totalAmount');
     
-    cartContainer.innerHTML = cart.map(item => `
+    cartItems.innerHTML = cart.map(item => `
         <div class="cart-item">
-            <span>${item.name}</span>
-            <div class="quantity-controls">
-                <button class="quantity-btn" onclick="adjustQuantity('${item.name}', -1)">-</button>
-                <span>${item.quantity}</span>
-                <button class="quantity-btn" onclick="adjustQuantity('${item.name}', 1)">+</button>
+            <div>
+                <h4>${item.name}</h4>
+                <p>${item.quantity} × ${item.price} ₽</p>
             </div>
-            <span>${item.price * item.quantity} ₽</span>
+            <span>${item.quantity * item.price} ₽</span>
         </div>
     `).join('');
-
+    
     totalElement.textContent = `${cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)} ₽`;
-    
-    if (tg) {
-        tg.MainButton.setText(`Оформить заказ (${total} ₽)`);
-    }
+    updateCartCounter();
 }
 
-function adjustQuantity(name, delta) {
-    const item = cart.find(i => i.name === name);
-    if (!item) return;
-
-    item.quantity += delta;
-    total += delta * item.price;
-    
-    if (item.quantity < 1) {
-        cart = cart.filter(i => i !== item);
-    }
-    
-    updateCart();
-    showNotification(`Количество изменено: ${name}`);
+function updateCartCounter() {
+    const counter = document.querySelector('.cart-counter');
+    counter.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
 }
 
-function clearCart() {
-    cart = [];
-    total = 0;
-    updateCart();
-    showNotification('Корзина очищена');
+function toggleCart() {
+    document.getElementById('cartOverlay').classList.toggle('active');
 }
 
-// Оформление заказа
-async function placeOrder() {
-    if (cart.length === 0) {
-        showNotification('Корзина пуста!');
-        return;
-    }
-
-    const loader = document.querySelector('.loader');
-    const orderBtn = document.querySelector('.order-btn');
-    
-    orderBtn.disabled = true;
-    loader.style.display = 'block';
-
-    try {
-        // Имитация отправки данных
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        if (tg) {
-            tg.sendData(JSON.stringify({
-                order: cart,
-                total: total
-            }));
-            tg.close();
-        } else {
-            alert('Заказ успешно оформлен!');
-            clearCart();
-        }
-    } finally {
-        orderBtn.disabled = false;
-        loader.style.display = 'none';
-    }
-}
-
-// Вспомогательные функции
 function showNotification(text) {
     const notification = document.getElementById('notification');
     notification.textContent = text;
@@ -136,52 +108,9 @@ function showNotification(text) {
     }, 2000);
 }
 
-// Инициализация
-initMenu();
-updateCart();
-// Пример системы лояльности (добавьте в app.js)
-class LoyaltyProgram {
-  constructor() {
-    this.points = localStorage.getItem('loyaltyPoints') || 0;
-  }
-
-  addPoints(amount) {
-    this.points += Math.floor(amount / 10);
-    localStorage.setItem('loyaltyPoints', this.points);
-  }
-
-  getBadge() {
-    return `🎖️ ${this.points} баллов`;
-  }
+function saveToLocalStorage() {
+    localStorage.setItem('cart', JSON.stringify(cart));
 }
 
-// Инициализация
-const loyalty = new LoyaltyProgram();
-// Добавьте в функцию добавления в корзину
-function animateAddToCart(itemElement) {
-  const clone = itemElement.cloneNode(true);
-  clone.style.position = 'absolute';
-  clone.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-  document.body.appendChild(clone);
-
-  const cartPosition = document.getElementById('cartButton').getBoundingClientRect();
-  
-  Object.assign(clone.style, {
-    left: `${itemElement.offsetLeft}px`,
-    top: `${itemElement.offsetTop}px`,
-    width: `${itemElement.offsetWidth}px`,
-    height: `${itemElement.offsetHeight}px`
-  });
-
-  requestAnimationFrame(() => {
-    Object.assign(clone.style, {
-      left: `${cartPosition.left}px`,
-      top: `${cartPosition.top}px`,
-      width: '20px',
-      height: '20px',
-      opacity: '0'
-    });
-  });
-
-  setTimeout(() => clone.remove(), 500);
-}
+// Запуск приложения
+document.addEventListener('DOMContentLoaded', init);

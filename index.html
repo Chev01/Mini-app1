@@ -3,42 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coffee House - Telegram Mini App</title>
+    <title>StarBrew - Coffee App</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <header class="header">
-            <h1 class="title">☕ Меню кофейни</h1>
-            <div class="badge">Выбор редакции</div>
-        </header>
-
-        <div class="menu-grid" id="menu">
-            <!-- Карточки будут добавлены через JavaScript -->
-        </div>
-
-        <div class="cart">
-            <div class="cart-header">
-                <h2>🛒 Ваша корзина</h2>
-                <button class="clear-btn" onclick="clearCart()">Очистить всё</button>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo">
+                <img src="https://upload.wikimedia.org/wikipedia/ru/thumb/3/35/Starbucks_Corporation_Logo_2011.svg/1200px-Starbucks_Corporation_Logo_2011.svg.png" alt="StarBrew">
             </div>
-            
-            <div class="cart-items" id="cart"></div>
-            
-            <div class="cart-footer">
-                <div class="total">
-                    <span>Итого:</span>
-                    <span id="total">0 ₽</span>
-                </div>
-                <button class="order-btn" onclick="placeOrder()">
-                    <span>Оформить заказ</span>
-                    <div class="loader" id="loader"></div>
+            <div class="user-controls">
+                <button class="cart-btn" id="cartButton">
+                    🛒 <span class="cart-counter">0</span>
                 </button>
             </div>
-        </div>
+        </header>
+
+        <main class="main-content">
+            <section class="menu-section">
+                <h2 class="section-title">Наше меню</h2>
+                <div class="menu-grid" id="menu"></div>
+            </section>
+
+            <div class="cart-overlay" id="cartOverlay">
+                <div class="cart-modal">
+                    <div class="cart-header">
+                        <h3>Ваш заказ</h3>
+                        <button class="close-btn" id="closeCart">&times;</button>
+                    </div>
+                    <div class="cart-items" id="cartItems"></div>
+                    <div class="cart-footer">
+                        <div class="total-price">
+                            <span>Итого:</span>
+                            <span id="totalAmount">0 ₽</span>
+                        </div>
+                        <button class="order-btn">Оформить заказ</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="notification" id="notification"></div>
+        </main>
     </div>
 
-    <div class="notification" id="notification"></div>
     <script src="app.js"></script>
 </body>
 </html>
