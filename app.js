@@ -139,3 +139,49 @@ function showNotification(text) {
 // Инициализация
 initMenu();
 updateCart();
+// Пример системы лояльности (добавьте в app.js)
+class LoyaltyProgram {
+  constructor() {
+    this.points = localStorage.getItem('loyaltyPoints') || 0;
+  }
+
+  addPoints(amount) {
+    this.points += Math.floor(amount / 10);
+    localStorage.setItem('loyaltyPoints', this.points);
+  }
+
+  getBadge() {
+    return `🎖️ ${this.points} баллов`;
+  }
+}
+
+// Инициализация
+const loyalty = new LoyaltyProgram();
+// Добавьте в функцию добавления в корзину
+function animateAddToCart(itemElement) {
+  const clone = itemElement.cloneNode(true);
+  clone.style.position = 'absolute';
+  clone.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+  document.body.appendChild(clone);
+
+  const cartPosition = document.getElementById('cartButton').getBoundingClientRect();
+  
+  Object.assign(clone.style, {
+    left: `${itemElement.offsetLeft}px`,
+    top: `${itemElement.offsetTop}px`,
+    width: `${itemElement.offsetWidth}px`,
+    height: `${itemElement.offsetHeight}px`
+  });
+
+  requestAnimationFrame(() => {
+    Object.assign(clone.style, {
+      left: `${cartPosition.left}px`,
+      top: `${cartPosition.top}px`,
+      width: '20px',
+      height: '20px',
+      opacity: '0'
+    });
+  });
+
+  setTimeout(() => clone.remove(), 500);
+}
