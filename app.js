@@ -1,173 +1,175 @@
 const menuItems = [
     {
-        name: 'Капучино',
+        name: 'Капучино Классический',
         price: 250,
-        image: 'https://images.unsplash.com/photo-1582515073490-39981397c445?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
-        category: 'coffee'
+        category: 'classic',
+        image: 'https://images.unsplash.com/...',
+        customizations: {
+            milk: [
+                { name: 'Коровье', price: 0 },
+                { name: 'Миндальное', price: 50 },
+                { name: 'Овсяное', price: 50 },
+            ],
+            syrups: [
+                { name: 'Ванильный', price: 30 },
+                { name: 'Карамельный', price: 30 },
+                { name: 'Шоколадный', price: 40 },
+            ]
+        }
     },
-    {
-        name: 'Латте',
-        price: 280,
-        image: 'https://images.unsplash.com/photo-1568649929103-28ffbefaca1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
-        category: 'coffee'
-    },
-    {
-        name: 'Мокачино',
-        price: 300,
-        image: 'https://images.unsplash.com/photo-1593443320730-2d1d2c4f1c24?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
-        category: 'chocolate'
-    }
+    // ... другие товары
 ];
 
-let cart = JSON.parse(localStorage.getItem('sb-cart')) || [];
-let total = 0;
+let cart = JSON.parse(localStorage.getItem('cart')) || [];
+let currentItem = null;
 
-// Инициализация приложения
-function initApp() {
+// Инициализация
+function init() {
     renderMenu();
-    updateCart();
     setupEventListeners();
-    
-    // Инициализация Telegram WebApp
-    if (window.Telegram?.WebApp) {
-        window.Telegram.WebApp.ready();
-        window.Telegram.WebApp.MainButton
-            .setText(`Заказ (${cart.length})`)
-            .onClick(toggleCart)
-            .show();
-    }
+    updateCartIcon();
 }
 
+// Рендер меню
 function renderMenu() {
-    const menuGrid = document.getElementById('menu');
-    menuGrid.innerHTML = menuItems.map(item => `
-        <article class="menu-card" data-category="${item.category}">
-            <div class="card-image">
-                <img src="${item.image}" alt="${item.name}">
-            </div>
-            <div class="card-content">
-                <h3>${item.name}</h3>
-                <div class="card-footer">
-                    <span>${item.price} ₽</span>
-                    <button class="add-btn" data-item='${JSON.stringify(item)}'>
-                        Добавить
-                    </button>
-                </div>
-            </div>
-        </article>
+    const menuContainer = document.getElementById('menu');
+    menuContainer.innerHTML = menuItems.map(item => `
+        <div class="menu-item" data-item='${JSON.stringify(item)}'>
+            <img src="${item.image}" class="item-image">
+            <h3 class="item-title">${item.name}</h3>
+            <p class="item-price">${item.price} ₽</p>
+        </div>
     `).join('');
 }
 
+// Обработчики событий
 function setupEventListeners() {
-    // Добавление в корзину
-    document.querySelectorAll('.add-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const item = JSON.parse(e.target.dataset.item);
-            addToCart(item);
+    // Выбор категории
+    document.querySelectorAll('.category').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelector('.category.active').classList.remove('active');
+            btn.classList.add('active');
+            filterMenu(btn.dataset.category);
         });
     });
 
-    // Управление корзиной
-    document.getElementById('cartButton').addEventListener('click', toggleCart);
-    document.getElementById('closeCart').addEventListener('click', toggleCart);
-    document.querySelector('.order-btn').addEventListener('click', placeOrder);
-}
+    // Открытие кастомизации
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            currentItem = JSON.parse(e.currentTarget.dataset.item);
+            openCustomizationModal(currentItem);
+        });
+    });
 
-function addToCart(item) {
-    const existing = cart.find(i => i.name === item.name);
-    
-    if (existing) {
-        existing.quantity++;
-    } else {
-        cart.push({...item, quantity: 1});
-    }
-    
-    updateCart();
-    showNotification(`+1 ${item.name}`);
-    saveCart();
-}
+    // Закрытие модалок
+    document.querySelectorAll('.close-modal, .close-cart').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.getElementById('customizeModal').style.display = 'none';
+            document.getElementById('cartSidebar').style.right = '-400px';
+        });
+    });
 
-function updateCart() {
-    const cartItems = document.getElementById('cartItems');
-    const totalElement = document.getElementById('totalAmount');
-    const counter = document.querySelector('.cart-counter');
-
-    // Обновление списка
-    cartItems.innerHTML = cart.map(item => `
-        <div class="cart-item">
-            <div class="item-info">
-                <h4>${item.name}</h4>
-                <div class="item-controls">
-                    <button class="quantity-btn" data-name="${item.name}" data-action="decrease">−</button>
-                    <span>${item.quantity}</span>
-                    <button class="quantity-btn" data-name="${item.name}" data-action="increase">+</button>
-                </div>
-            </div>
-            <span class="item-price">${item.quantity * item.price} ₽</span>
-        </div>
-    `).join('');
-
-    // Обновление суммы
-    total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    totalElement.textContent = `${total} ₽`;
-    
-    // Обновление счетчика
-    counter.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
-
-    // Добавляем обработчики для кнопок количества
-    document.querySelectorAll('.quantity-btn').forEach(btn => {
-        btn.addEventListener('click', handleQuantityChange);
+    // Открытие корзины
+    document.getElementById('cartIcon').addEventListener('click', () => {
+        document.getElementById('cartSidebar').style.right = '0';
+        updateCartDisplay();
     });
 }
 
-function handleQuantityChange(e) {
-    const action = e.target.dataset.action;
-    const name = e.target.dataset.name;
-    const item = cart.find(i => i.name === name);
+// Фильтрация меню
+function filterMenu(category) {
+    const items = document.querySelectorAll('.menu-item');
+    items.forEach(item => {
+        const itemData = JSON.parse(item.dataset.item);
+        if (category === 'all' || itemData.category === category) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
 
-    if (action === 'increase') {
-        item.quantity++;
-        total += item.price;
+// Модальное окно кастомизации
+function openCustomizationModal(item) {
+    const modal = document.getElementById('customizeModal');
+    document.getElementById('modalTitle').textContent = item.name;
+    document.getElementById('modalTotal').textContent = item.price;
+
+    // Очистка опций
+    const milkOptions = document.getElementById('milkOptions');
+    const syrupOptions = document.getElementById('syrupOptions');
+    milkOptions.innerHTML = '';
+    syrupOptions.innerHTML = '';
+
+    // Добавление опций молока
+    item.customizations.milk.forEach(milk => {
+        const div = document.createElement('div');
+        div.className = 'option';
+        div.textContent = `${milk.name}${milk.price > 0 ? ` (+${milk.price}₽)` : ''}`;
+        div.addEventListener('click', () => selectOption(milk, 'milk'));
+        milkOptions.appendChild(div);
+    });
+
+    // Добавление сиропов
+    item.customizations.syrups.forEach(syrup => {
+        const div = document.createElement('div');
+        div.className = 'option';
+        div.textContent = `${syrup.name} (+${syrup.price}₽)`;
+        div.addEventListener('click', () => selectOption(syrup, 'syrup'));
+        syrupOptions.appendChild(div);
+    });
+
+    modal.style.display = 'flex';
+}
+
+// Выбор опции
+let selectedOptions = { milk: null, syrups: [] };
+function selectOption(option, type) {
+    if (type === 'milk') {
+        selectedOptions.milk = option;
+        document.querySelectorAll('#milkOptions .option').forEach(opt => 
+            opt.classList.remove('selected'));
+        event.target.classList.add('selected');
     } else {
-        item.quantity--;
-        total -= item.price;
-        if (item.quantity < 1) {
-            cart = cart.filter(i => i !== item);
+        const index = selectedOptions.syrups.findIndex(s => s.name === option.name);
+        if (index > -1) {
+            selectedOptions.syrups.splice(index, 1);
+            event.target.classList.remove('selected');
+        } else {
+            selectedOptions.syrups.push(option);
+            event.target.classList.add('selected');
         }
     }
-
-    updateCart();
-    saveCart();
+    updateModalTotal();
 }
 
-function toggleCart() {
-    document.getElementById('cartOverlay').classList.toggle('active');
+// Обновление суммы в модалке
+function updateModalTotal() {
+    let total = currentItem.price;
+    if (selectedOptions.milk) total += selectedOptions.milk.price;
+    total += selectedOptions.syrups.reduce((sum, s) => sum + s.price, 0);
+    document.getElementById('modalTotal').textContent = total;
 }
 
-function placeOrder() {
-    if (cart.length === 0) return;
+// Добавление в корзину
+document.querySelector('.add-to-cart').addEventListener('click', () => {
+    const item = {
+        ...currentItem,
+        customization: selectedOptions,
+        totalPrice: parseInt(document.getElementById('modalTotal').textContent)
+    };
     
-    showNotification('✅ Заказ оформлен!');
-    localStorage.setItem('sb-order-history', JSON.stringify(cart));
-    cart = [];
-    updateCart();
-    toggleCart();
-    saveCart();
-}
+    cart.push(item);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartIcon();
+    document.getElementById('customizeModal').style.display = 'none';
+    selectedOptions = { milk: null, syrups: [] };
+});
 
-function showNotification(text) {
-    const notification = document.getElementById('notification');
-    notification.textContent = text;
-    notification.classList.add('show');
-    
-    setTimeout(() => {
-        notification.classList.remove('show');
-    }, 2000);
-}
-
-function saveCart() {
-    localStorage.setItem('sb-cart', JSON.stringify(cart));
+// Обновление иконки корзины
+function updateCartIcon() {
+    document.querySelector('.cart-count').textContent = cart.length;
 }
 
 // Запуск приложения
-document.addEventListener('DOMContentLoaded', initApp);
+document.addEventListener('DOMContentLoaded', init);
