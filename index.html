@@ -3,65 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Coffee App</title>
+    <title>CoffeeSpace - Виртуальная Кофейня</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="app">
-        <!-- Шапка с категориями -->
+    <div class="container">
+        <!-- Шапка с логотипом -->
+        <header class="header">
+            <div class="logo">
+                <img src="https://i.ibb.co/6RJ5hq6/coffee-cup.png" alt="CoffeeSpace">
+                <h1>CoffeeSpace</h1>
+            </div>
+            <div class="cart-icon" id="cartIcon">
+                🛍️ <span class="cart-count">0</span>
+            </div>
+        </header>
+
+        <!-- Навигация по категориям -->
         <nav class="categories">
             <button class="category active" data-category="all">Все</button>
             <button class="category" data-category="classic">Классика</button>
-            <button class="category" data-category="cold">Холодные</button>
+            <button class="category" data-category="iced">Холодные</button>
             <button class="category" data-category="signature">Авторские</button>
             <button class="category" data-category="tea">Чай</button>
-            <button class="category" data-category="milkshake">Милкшейки</button>
+            <button class="category" data-category="dessert">Десерты</button>
         </nav>
 
         <!-- Основное меню -->
         <main class="menu-grid" id="menu"></main>
 
         <!-- Модальное окно кастомизации -->
-        <div class="customize-modal" id="customizeModal">
+        <div class="custom-modal" id="customModal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3 id="modalTitle"></h3>
+                    <h2 id="modalTitle"></h2>
                     <button class="close-modal">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <div class="option-group">
-                        <h4>Молоко</h4>
-                        <div class="options" id="milkOptions"></div>
+                    <div class="custom-option">
+                        <h3>Выберите молоко:</h3>
+                        <div class="options-grid" id="milkOptions"></div>
                     </div>
-                    <div class="option-group">
-                        <h4>Сиропы</h4>
-                        <div class="options" id="syrupOptions"></div>
+                    <div class="custom-option">
+                        <h3>Добавьте сиропы:</h3>
+                        <div class="options-grid" id="syrupOptions"></div>
+                    </div>
+                    <div class="custom-option">
+                        <h3>Дополнительно:</h3>
+                        <div class="options-grid" id="extraOptions"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <div class="price">Итого: <span id="modalTotal">0</span> ₽</div>
-                    <button class="add-to-cart">Добавить в корзину</button>
+                    <div class="total-price">
+                        Итого: <span id="modalTotal">0</span> ₽
+                    </div>
+                    <button class="add-to-cart-btn">Добавить в корзину</button>
                 </div>
             </div>
         </div>
 
-        <!-- Корзина -->
+        <!-- Боковая панель корзины -->
         <div class="cart-sidebar" id="cartSidebar">
             <div class="cart-header">
-                <h3>Ваш заказ</h3>
+                <h2>Ваш заказ</h2>
                 <button class="close-cart">&times;</button>
             </div>
             <div class="cart-items" id="cartItems"></div>
             <div class="cart-footer">
-                <div class="total">Итого: <span id="cartTotal">0</span> ₽</div>
+                <div class="cart-total">
+                    Общая сумма: <span id="cartTotal">0</span> ₽
+                </div>
                 <button class="checkout-btn">Оформить заказ</button>
             </div>
-        </div>
-
-        <!-- Иконка корзины -->
-        <div class="cart-icon" id="cartIcon">
-            🛒 <span class="cart-count">0</span>
         </div>
     </div>
 

@@ -1,87 +1,95 @@
 const menuItems = [
     {
-        name: 'Капучино Классический',
-        price: 250,
+        id: 1,
+        name: 'Классический капучино',
+        price: 280,
         category: 'classic',
-        image: 'https://images.unsplash.com/...',
+        image: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d',
         customizations: {
             milk: [
                 { name: 'Коровье', price: 0 },
-                { name: 'Миндальное', price: 50 },
                 { name: 'Овсяное', price: 50 },
+                { name: 'Миндальное', price: 50 }
             ],
             syrups: [
                 { name: 'Ванильный', price: 30 },
                 { name: 'Карамельный', price: 30 },
-                { name: 'Шоколадный', price: 40 },
+                { name: 'Кокосовый', price: 40 }
+            ],
+            extras: [
+                { name: 'Двойная порция', price: 80 },
+                { name: 'Веганские сливки', price: 50 }
             ]
         }
     },
-    // ... другие товары
+    // Добавьте остальные товары по аналогии
 ];
 
 let cart = JSON.parse(localStorage.getItem('cart')) || [];
 let currentItem = null;
 
-// Инициализация
+// Инициализация приложения
 function init() {
     renderMenu();
     setupEventListeners();
-    updateCartIcon();
+    updateCartCounter();
 }
 
 // Рендер меню
 function renderMenu() {
     const menuContainer = document.getElementById('menu');
     menuContainer.innerHTML = menuItems.map(item => `
-        <div class="menu-item" data-item='${JSON.stringify(item)}'>
-            <img src="${item.image}" class="item-image">
-            <h3 class="item-title">${item.name}</h3>
-            <p class="item-price">${item.price} ₽</p>
+        <div class="menu-item" data-id="${item.id}">
+            <img src="${item.image}" class="item-image" alt="${item.name}">
+            <div class="item-content">
+                <h3 class="item-title">${item.name}</h3>
+                <p class="item-price">${item.price} ₽</p>
+                <button class="customize-btn">Настроить</button>
+            </div>
         </div>
     `).join('');
 }
 
 // Обработчики событий
 function setupEventListeners() {
-    // Выбор категории
+    // Фильтрация по категориям
     document.querySelectorAll('.category').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelector('.category.active').classList.remove('active');
-            btn.classList.add('active');
-            filterMenu(btn.dataset.category);
-        });
+        btn.addEventListener('click', () => handleCategoryClick(btn));
     });
 
-    // Открытие кастомизации
+    // Открытие модалки кастомизации
     document.querySelectorAll('.menu-item').forEach(item => {
         item.addEventListener('click', (e) => {
-            currentItem = JSON.parse(e.currentTarget.dataset.item);
-            openCustomizationModal(currentItem);
+            if(e.target.classList.contains('customize-btn')) {
+                const itemId = e.currentTarget.dataset.id;
+                currentItem = menuItems.find(i => i.id == itemId);
+                openCustomizationModal(currentItem);
+            }
         });
     });
 
     // Закрытие модалок
     document.querySelectorAll('.close-modal, .close-cart').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.getElementById('customizeModal').style.display = 'none';
-            document.getElementById('cartSidebar').style.right = '-400px';
-        });
+        btn.addEventListener('click', closeModals);
     });
 
     // Открытие корзины
-    document.getElementById('cartIcon').addEventListener('click', () => {
-        document.getElementById('cartSidebar').style.right = '0';
-        updateCartDisplay();
-    });
+    document.getElementById('cartIcon').addEventListener('click', openCart);
 }
 
-// Фильтрация меню
+// Логика фильтрации
+function handleCategoryClick(btn) {
+    document.querySelector('.category.active').classList.remove('active');
+    btn.classList.add('active');
+    const category = btn.dataset.category;
+    filterMenu(category);
+}
+
 function filterMenu(category) {
     const items = document.querySelectorAll('.menu-item');
     items.forEach(item => {
-        const itemData = JSON.parse(item.dataset.item);
-        if (category === 'all' || itemData.category === category) {
+        const itemCategory = menuItems.find(i => i.id == item.dataset.id).category;
+        if(category === 'all' || category === itemCategory) {
             item.style.display = 'block';
         } else {
             item.style.display = 'none';
@@ -91,85 +99,118 @@ function filterMenu(category) {
 
 // Модальное окно кастомизации
 function openCustomizationModal(item) {
-    const modal = document.getElementById('customizeModal');
     document.getElementById('modalTitle').textContent = item.name;
     document.getElementById('modalTotal').textContent = item.price;
+    
+    fillOptions('milkOptions', item.customizations.milk);
+    fillOptions('syrupOptions', item.customizations.syrups);
+    fillOptions('extraOptions', item.customizations.extras);
 
-    // Очистка опций
-    const milkOptions = document.getElementById('milkOptions');
-    const syrupOptions = document.getElementById('syrupOptions');
-    milkOptions.innerHTML = '';
-    syrupOptions.innerHTML = '';
-
-    // Добавление опций молока
-    item.customizations.milk.forEach(milk => {
-        const div = document.createElement('div');
-        div.className = 'option';
-        div.textContent = `${milk.name}${milk.price > 0 ? ` (+${milk.price}₽)` : ''}`;
-        div.addEventListener('click', () => selectOption(milk, 'milk'));
-        milkOptions.appendChild(div);
-    });
-
-    // Добавление сиропов
-    item.customizations.syrups.forEach(syrup => {
-        const div = document.createElement('div');
-        div.className = 'option';
-        div.textContent = `${syrup.name} (+${syrup.price}₽)`;
-        div.addEventListener('click', () => selectOption(syrup, 'syrup'));
-        syrupOptions.appendChild(div);
-    });
-
-    modal.style.display = 'flex';
+    document.getElementById('customModal').style.display = 'flex';
 }
 
-// Выбор опции
-let selectedOptions = { milk: null, syrups: [] };
-function selectOption(option, type) {
-    if (type === 'milk') {
-        selectedOptions.milk = option;
-        document.querySelectorAll('#milkOptions .option').forEach(opt => 
-            opt.classList.remove('selected'));
-        event.target.classList.add('selected');
-    } else {
-        const index = selectedOptions.syrups.findIndex(s => s.name === option.name);
-        if (index > -1) {
-            selectedOptions.syrups.splice(index, 1);
-            event.target.classList.remove('selected');
-        } else {
-            selectedOptions.syrups.push(option);
-            event.target.classList.add('selected');
-        }
-    }
+function fillOptions(containerId, options) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = options.map(opt => `
+        <div class="option" data-price="${opt.price}">
+            ${opt.name}${opt.price > 0 ? ` (+${opt.price}₽)` : ''}
+        </div>
+    `).join('');
+
+    container.querySelectorAll('.option').forEach(opt => {
+        opt.addEventListener('click', handleOptionSelect);
+    });
+}
+
+function handleOptionSelect(e) {
+    e.target.classList.toggle('selected');
     updateModalTotal();
 }
 
-// Обновление суммы в модалке
 function updateModalTotal() {
     let total = currentItem.price;
-    if (selectedOptions.milk) total += selectedOptions.milk.price;
-    total += selectedOptions.syrups.reduce((sum, s) => sum + s.price, 0);
+    document.querySelectorAll('.option.selected').forEach(opt => {
+        total += parseInt(opt.dataset.price);
+    });
     document.getElementById('modalTotal').textContent = total;
 }
 
-// Добавление в корзину
-document.querySelector('.add-to-cart').addEventListener('click', () => {
-    const item = {
-        ...currentItem,
-        customization: selectedOptions,
-        totalPrice: parseInt(document.getElementById('modalTotal').textContent)
+// Корзина
+function addToCart() {
+    const selectedOptions = {
+        milk: getSelectedOptions('milkOptions'),
+        syrups: getSelectedOptions('syrupOptions'),
+        extras: getSelectedOptions('extraOptions')
     };
-    
-    cart.push(item);
-    localStorage.setItem('cart', JSON.stringify(cart));
-    updateCartIcon();
-    document.getElementById('customizeModal').style.display = 'none';
-    selectedOptions = { milk: null, syrups: [] };
-});
 
-// Обновление иконки корзины
-function updateCartIcon() {
+    const cartItem = {
+        ...currentItem,
+        options: selectedOptions,
+        total: parseInt(document.getElementById('modalTotal').textContent)
+    };
+
+    cart.push(cartItem);
+    saveCart();
+    updateCartDisplay();
+    closeModals();
+}
+
+function getSelectedOptions(containerId) {
+    return Array.from(document.querySelectorAll(`#${containerId} .option.selected`))
+        .map(opt => ({
+            name: opt.textContent.split('+')[0].trim(),
+            price: parseInt(opt.dataset.price)
+        }));
+}
+
+function updateCartDisplay() {
+    const cartItems = document.getElementById('cartItems');
+    cartItems.innerHTML = cart.map((item, index) => `
+        <div class="cart-item">
+            <div>
+                <h4>${item.name}</h4>
+                <div class="item-options">
+                    ${renderOptions(item.options)}
+                </div>
+            </div>
+            <span>${item.total} ₽</span>
+        </div>
+    `).join('');
+
+    const total = cart.reduce((sum, item) => sum + item.total, 0);
+    document.getElementById('cartTotal').textContent = total;
+    updateCartCounter();
+}
+
+function renderOptions(options) {
+    return Object.entries(options)
+        .filter(([_, value]) => value.length > 0)
+        .map(([key, values]) => `
+            <div class="option-group">
+                <span class="option-label">${key}:</span>
+                ${values.map(v => `<span class="option-value">${v.name}</span>`).join(', ')}
+            </div>
+        `).join('');
+}
+
+// Вспомогательные функции
+function saveCart() {
+    localStorage.setItem('cart', JSON.stringify(cart));
+}
+
+function updateCartCounter() {
     document.querySelector('.cart-count').textContent = cart.length;
 }
 
-// Запуск приложения
+function openCart() {
+    document.getElementById('cartSidebar').style.right = '0';
+    updateCartDisplay();
+}
+
+function closeModals() {
+    document.getElementById('customModal').style.display = 'none';
+    document.getElementById('cartSidebar').style.right = '-400px';
+}
+
+// Инициализация
 document.addEventListener('DOMContentLoaded', init);
