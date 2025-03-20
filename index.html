@@ -3,29 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Чашка Кофе | Официальное приложение</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
-    <link rel="stylesheet" href="style.css">
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>Чашка Кофе | Умное меню</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #7B5544;
+            --secondary: #FFD8C2;
+            --accent: #E67A5D;
+            --surface: #FFF8F3;
+            --text: #3E2723;
+            --success: #81C784;
+        }
+
+        /* Новый дизайн с микровзаимодействиями */
+        .menu-item {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .menu-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        /* Анимированная кнопка добавления */
+        .add-to-cart.added {
+            animation: bounce 0.6s ease;
+            background: var(--success);
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(0.9); }
+        }
+
+        /* Умный выбор размера */
+        .size-pills {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .size-pill {
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            background: var(--surface);
+            border: 2px solid var(--secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .size-pill.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+    </style>
 </head>
 <body>
-    <div class="app-container">
-        <header class="app-header">
-            <div class="header-content">
-                <h1 class="logo">☕️ Чашка Кофе</h1>
-                <button id="close-app" class="icon-button">×</button>
-            </div>
-        </header>
+    <!-- Добавлен лоадер -->
+    <div class="loader" id="loader">
+        <div class="coffee-cup"></div>
+    </div>
 
-        <main class="menu-grid" id="menu-container"></main>
-
-        <div class="cart-fab" id="cart-button">
-            <div class="fab-content">
-                🛒 <span class="cart-counter">0</span>
+    <!-- Обновлённая карточка товара -->
+    <div class="menu-item">
+        <div class="item-header">
+            <h3>Капучино <i class="fas fa-mug-hot"></i></h3>
+            <div class="price-badge">
+                <span class="price">160 ₽</span>
+                <small>S</small>
             </div>
+        </div>
+        
+        <div class="size-pills">
+            <div class="size-pill active" data-size="S">250 мл</div>
+            <div class="size-pill" data-size="M">350 мл</div>
+            <div class="size-pill" data-size="L">450 мл</div>
+        </div>
+
+        <p class="item-desc">Воздушная пенка, бархатное молоко...</p>
+
+        <button class="add-to-cart">
+            <i class="fas fa-plus"></i>
+            Добавить
+        </button>
+    </div>
+
+    <!-- Улучшенная корзина -->
+    <div class="cart-panel">
+        <div class="cart-header">
+            <h3>Ваш заказ <i class="fas fa-receipt"></i></h3>
+            <button class="close-cart">&times;</button>
+        </div>
+        
+        <div class="cart-items">
+            <!-- Динамическое содержимое -->
+        </div>
+        
+        <div class="cart-total">
+            Итого: <span>0 ₽</span>
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script>
+        // Интерактивный выбор размера
+        document.querySelectorAll('.size-pill').forEach(pill => {
+            pill.addEventListener('click', function() {
+                this.parentElement.querySelectorAll('.size-pill').forEach(p => 
+                    p.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Обновление цены
+                const basePrice = 160; // Пример
+                const prices = { S: 0, M: 50, L: 100 };
+                const newPrice = basePrice + prices[this.dataset.size];
+                this.closest('.menu-item').querySelector('.price').textContent = 
+                    `${newPrice} ₽`;
+            });
+        });
+
+        // Умное добавление в корзину
+        document.querySelectorAll('.add-to-cart').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.classList.add('added');
+                setTimeout(() => this.classList.remove('added'), 600);
+                
+                // Получение данных
+                const item = {
+                    name: this.closest('.menu-item').querySelector('h3').textContent,
+                    size: this.closest('.menu-item').querySelector('.size-pill.active').dataset.size,
+                    price: parseInt(this.closest('.menu-item').querySelector('.price').textContent)
+                };
+
+                // Добавление в корзину
+                addToCart(item);
+            });
+        });
+
+        // Система корзины
+        let cart = [];
+        function addToCart(item) {
+            cart.push(item);
+            updateCartUI();
+            showToast(`Добавлено: ${item.name} (${item.size})`);
+        }
+
+        // Анимация тоста
+        function showToast(text) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `
+                <i class="fas fa-check-circle"></i>
+                ${text}
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => toast.remove(), 2000);
+        }
+    </script>
 </body>
 </html>
