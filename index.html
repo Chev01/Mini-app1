@@ -4,21 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Чашка Кофе | Официальное приложение</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-    <header class="app-header">
-        <h1>☕️ Чашка Кофе</h1>
-        <button id="close-app">×</button>
-    </header>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-content">
+                <h1 class="logo">☕️ Чашка Кофе</h1>
+                <button id="close-app" class="icon-button">×</button>
+            </div>
+        </header>
 
-    <main class="menu-container">
-        <!-- Динамически генерируется через app.js -->
-    </main>
+        <main class="menu-grid" id="menu-container"></main>
 
-    <div class="cart-fab" id="cart-button">🛒 <span class="badge">0</span></div>
-    
+        <div class="cart-fab" id="cart-button">
+            <div class="fab-content">
+                🛒 <span class="cart-counter">0</span>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>
