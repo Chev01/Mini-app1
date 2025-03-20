@@ -1,62 +1,134 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Чашка кофе ☕️</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>☕ Чашка Кофе — Меню</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
 <div id="app" class="min-h-screen bg-gradient-to-b from-amber-50 to-rose-50">
-    <!-- Шапка и корзина остаются без изменений -->
+    <!-- Шапка -->
+    <header class="sticky top-0 bg-white/90 backdrop-blur-md shadow-sm z-50">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <h1 class="text-2xl font-bold text-rose-800">☕ Чашка Кофе</h1>
+            <button @click="showCart = true" class="relative p-2 rounded-full bg-rose-100 hover:bg-rose-200 transition">
+                🛒 <span v-if="cartTotalCount > 0" class="absolute -top-1 -right-1 bg-rose-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">
+                    {{ cartTotalCount }}
+                </span>
+            </button>
+        </div>
+    </header>
 
-    <main class="container mx-auto px-4 py-4">
+    <!-- Основное меню -->
+    <main class="container mx-auto px-4 py-6">
+        <!-- Категории -->
+        <div class="flex overflow-x-auto gap-3 pb-4 scrollbar-hide">
+            <button v-for="category in categories" 
+                    @click="selectedCategory = category.id"
+                    :class="selectedCategory === category.id 
+                        ? 'bg-rose-800 text-white' 
+                        : 'bg-white text-gray-800'"
+                    class="px-4 py-2 rounded-full shadow-sm transition-colors flex items-center gap-2">
+                <span class="text-lg">{{ category.icon }}</span>
+                {{ category.name }}
+            </button>
+        </div>
+
+        <!-- Список товаров -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Обновленная карточка товара -->
             <article v-for="product in filteredProducts" 
                     class="bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition">
                 <div class="relative">
                     <img :src="product.image" 
-                        class="w-full h-48 object-cover rounded-lg mb-4" 
-                        alt="Coffee">
-                    <span class="absolute top-2 right-2 bg-white/90 px-3 py-1 rounded-full text-sm">
+                        class="w-full h-48 object-cover rounded-xl mb-4" 
+                        :alt="product.name">
+                    <span class="absolute top-2 right-2 bg-white/90 px-3 py-1 rounded-full text-sm shadow">
                         {{ product.categoryIcon }}
                     </span>
                 </div>
                 
-                <h3 class="font-semibold text-lg mb-2">{{ product.name }}</h3>
+                <h3 class="font-bold text-lg mb-2">{{ product.name }}</h3>
                 <p class="text-gray-600 text-sm mb-4">{{ product.description }}</p>
 
-                <!-- Блок с размерами -->
+                <!-- Размеры -->
                 <div class="grid grid-cols-2 gap-2 mb-4">
                     <button v-for="size in product.sizes"
                             @click="selectSize(product.id, size)"
-                            :class="{
-                                'border-rose-800 bg-rose-50': selectedSizes[product.id]?.size === size.size,
-                                'border-gray-200': selectedSizes[product.id]?.size !== size.size
-                            }"
-                            class="p-2 border rounded-lg text-sm transition-colors">
+                            :class="selectedSizes[product.id]?.size === size.size 
+                                ? 'border-2 border-rose-800 bg-rose-50' 
+                                : 'border border-gray-200'"
+                            class="p-2 rounded-lg text-sm text-left transition-all">
                         <div class="font-medium">{{ size.size }}</div>
-                        <div class="text-rose-800">{{ size.price }} ₽</div>
-                        <div class="text-gray-500 text-xs">{{ size.volume }}</div>
+                        <div class="text-rose-800 font-bold">{{ size.price }} ₽</div>
+                        <div class="text-gray-500 text-xs mt-1">{{ size.volume }}</div>
                     </button>
                 </div>
 
                 <button @click="addToCart(product)" 
-                        class="w-full bg-rose-100 text-rose-800 px-4 py-3 rounded-xl flex items-center justify-center 
-                               hover:bg-rose-200 transition gap-2">
+                        class="w-full bg-rose-100 text-rose-800 px-4 py-3 rounded-xl 
+                               hover:bg-rose-200 transition flex items-center justify-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                              d="M12 4v16m8-8H4"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
-                    Добавить в корзину
+                    Добавить
                 </button>
             </article>
         </div>
     </main>
 
-    <!-- Остальные части интерфейса без изменений -->
+    <!-- Корзина -->
+    <div v-if="showCart" class="fixed inset-0 bg-black/50 z-50 flex items-end">
+        <div class="bg-white w-full rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto animate-slide-up">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">🛒 Корзина</h2>
+                <button @click="showCart = false" class="text-gray-500 hover:text-gray-700 text-2xl">
+                    &times;
+                </button>
+            </div>
+
+            <div v-if="cart.length === 0" class="text-center py-8 text-gray-500">
+                Корзина пуста
+            </div>
+
+            <div v-else>
+                <div v-for="item in cart" class="flex items-center justify-between mb-4 pb-2 border-b">
+                    <div class="flex-1">
+                        <h3 class="font-semibold">{{ item.product.name }}</h3>
+                        <div class="text-sm text-gray-500">{{ item.size.size }} · {{ item.size.price }} ₽</div>
+                        <div class="flex items-center gap-2 mt-2">
+                            <button @click="updateQuantity(item, -1)" 
+                                    class="w-8 h-8 rounded-full bg-rose-100 text-rose-800 hover:bg-rose-200">
+                                -
+                            </button>
+                            <span class="w-8 text-center">{{ item.quantity }}</span>
+                            <button @click="updateQuantity(item, 1)" 
+                                    class="w-8 h-8 rounded-full bg-rose-100 text-rose-800 hover:bg-rose-200">
+                                +
+                            </button>
+                        </div>
+                    </div>
+                    <div class="text-rose-800 font-bold">
+                        {{ (item.size.price * item.quantity).toLocaleString() }} ₽
+                    </div>
+                </div>
+
+                <div class="pt-4 mt-4">
+                    <div class="flex justify-between mb-4 font-bold">
+                        <span>Итого:</span>
+                        <span class="text-rose-800">{{ cartTotal.toLocaleString() }} ₽</span>
+                    </div>
+                    <button @click="checkout" 
+                            class="w-full bg-rose-800 text-white py-3 rounded-xl 
+                                   hover:bg-rose-900 transition font-semibold flex items-center justify-center gap-2">
+                        💳 Оплатить {{ cartTotal.toLocaleString() }} ₽
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -65,20 +137,23 @@ const { createApp } = Vue;
 createApp({
     data() {
         return {
-            categories: [
-                { name: 'Классические кофейные напитки', icon: '☕', id: 'coffee' },
-                { name: 'Без кофеина', icon: '🍵', id: 'decaf' },
-                { name: 'Чайная коллекция', icon: '🫖', id: 'tea' },
-                { name: 'Холодные напитки', icon: '❄️', id: 'cold' }
-            ],
+            showCart: false,
             selectedCategory: 'coffee',
+            categories: [
+                { id: 'coffee', name: 'Кофейные', icon: '☕', color: 'rose' },
+                { id: 'decaf', name: 'Без кофеина', icon: '🍵', color: 'emerald' },
+                { id: 'tea', name: 'Чайная коллекция', icon: '🫖', color: 'amber' },
+                { id: 'cold', name: 'Холодные', icon: '❄️', color: 'blue' }
+            ],
             products: [
+                // Классические кофейные
                 {
                     id: 1,
                     name: 'Эспрессо',
                     category: 'coffee',
                     categoryIcon: '☕',
-                    description: 'Интенсивный, как утро понедельника. Идеальная база для тех, кто ценит чистый вкус кофе.',
+                    description: 'Интенсивный, как утро понедельника. Идеальная база для чистого вкуса кофе.',
+                    image: '/images/espresso.jpg',
                     sizes: [{ size: 'S', price: 120, volume: '60 мл' }]
                 },
                 {
@@ -86,7 +161,8 @@ createApp({
                     name: 'Американо',
                     category: 'coffee',
                     categoryIcon: '☕',
-                    description: 'Лёгкий, прозрачный, с нотками карамели. Для тех, кто не спешит, но хочет взбодриться.',
+                    description: 'Лёгкий, прозрачный, с нотками карамели. Для неспешного бодрящего старта.',
+                    image: '/images/americano.jpg',
                     sizes: [
                         { size: 'S', price: 140, volume: '250 мл' },
                         { size: 'M', price: 160, volume: '350 мл' },
@@ -98,7 +174,8 @@ createApp({
                     name: 'Капучино',
                     category: 'coffee',
                     categoryIcon: '☕',
-                    description: 'Воздушная пенка, бархатное молоко и идеальный баланс. Как объятие в чашке.',
+                    description: 'Воздушная пенка и бархатное молоко — объятие в чашке.',
+                    image: '/images/cappuccino.jpg',
                     sizes: [
                         { size: 'S', price: 160, volume: '250 мл' },
                         { size: 'M', price: 210, volume: '350 мл' },
@@ -107,10 +184,63 @@ createApp({
                 },
                 {
                     id: 4,
+                    name: 'Латте',
+                    category: 'coffee',
+                    categoryIcon: '☕',
+                    description: 'Сливочная нежность с деликатной молочной пенкой.',
+                    image: '/images/latte.jpg',
+                    sizes: [
+                        { size: 'S', price: 160, volume: '250 мл' },
+                        { size: 'M', price: 210, volume: '350 мл' },
+                        { size: 'L', price: 260, volume: '450 мл' }
+                    ]
+                },
+                {
+                    id: 5,
+                    name: 'Раф',
+                    category: 'coffee',
+                    categoryIcon: '☕',
+                    description: 'Сливочно-ванильное облако с лёгкой кофейной горчинкой.',
+                    image: '/images/raf.jpg',
+                    sizes: [
+                        { size: 'S', price: 160, volume: '250 мл' },
+                        { size: 'M', price: 210, volume: '350 мл' },
+                        { size: 'L', price: 260, volume: '450 мл' }
+                    ]
+                },
+                {
+                    id: 6,
+                    name: 'Флэт-Уайт',
+                    category: 'coffee',
+                    categoryIcon: '☕',
+                    description: 'Плотный и насыщенный с шелковистой текстурой.',
+                    image: '/images/flat-white.jpg',
+                    sizes: [
+                        { size: 'S', price: 260, volume: '250 мл' },
+                        { size: 'L', price: 360, volume: '450 мл' }
+                    ]
+                },
+                {
+                    id: 7,
+                    name: 'Мокко',
+                    category: 'coffee',
+                    categoryIcon: '☕',
+                    description: 'Шоколадный десерт в чашке с карамельными нотками.',
+                    image: '/images/mocha.jpg',
+                    sizes: [
+                        { size: 'M', price: 260, volume: '350 мл' },
+                        { size: 'L', price: 310, volume: '450 мл' }
+                    ]
+                },
+
+                // Без кофеина
+                {
+                    id: 8,
                     name: 'Матча-Латте',
                     category: 'decaf',
                     categoryIcon: '🍵',
-                    description: 'Японская церемония в ваших руках. Травянистая свежесть и сливочная нежность.',
+                    description: 'Японская церемония: травянистая свежесть и сливочная нежность.',
+                    image: '/images/matcha.jpg',
                     sizes: [
                         { size: 'S', price: 210, volume: '250 мл' },
                         { size: 'M', price: 260, volume: '350 мл' },
@@ -118,76 +248,115 @@ createApp({
                     ]
                 },
                 {
-                    id: 5,
+                    id: 9,
+                    name: 'Какао',
+                    category: 'decaf',
+                    categoryIcon: '🍵',
+                    description: 'Густое детское наслаждение с зефирным кремом.',
+                    image: '/images/cocoa.jpg',
+                    sizes: [
+                        { size: 'S', price: 160, volume: '250 мл' },
+                        { size: 'M', price: 210, volume: '350 мл' },
+                        { size: 'L', price: 260, volume: '450 мл' }
+                    ]
+                },
+
+                // Чайная коллекция
+                {
+                    id: 10,
+                    name: 'Чёрный чай',
+                    category: 'tea',
+                    categoryIcon: '🫖',
+                    description: 'Классика с терпким характером для ясного утра.',
+                    image: '/images/black-tea.jpg',
+                    sizes: [
+                        { size: 'M', price: 140, volume: '350 мл' },
+                        { size: 'L', price: 180, volume: '450 мл' }
+                    ]
+                },
+                {
+                    id: 11,
+                    name: 'Зелёный чай',
+                    category: 'tea',
+                    categoryIcon: '🫖',
+                    description: 'Свежесть и лёгкая горчинка для очищения мыслей.',
+                    image: '/images/green-tea.jpg',
+                    sizes: [
+                        { size: 'M', price: 140, volume: '350 мл' },
+                        { size: 'L', price: 180, volume: '450 мл' }
+                    ]
+                },
+                {
+                    id: 12,
+                    name: 'Молочный улун',
+                    category: 'tea',
+                    categoryIcon: '🫖',
+                    description: 'Тайваньская магия со сливочными нотами.',
+                    image: '/images/oolong.jpg',
+                    sizes: [
+                        { size: 'M', price: 140, volume: '350 мл' },
+                        { size: 'L', price: 180, volume: '450 мл' }
+                    ]
+                },
+                {
+                    id: 13,
                     name: 'Малиновое утро',
                     category: 'tea',
                     categoryIcon: '🫖',
-                    description: 'Ягодный фейерверк с лёгкой кислинкой. Пробуждает лучше будильника!',
+                    description: 'Ягодный фейерверк с кислинкой вместо будильника.',
+                    image: '/images/raspberry-tea.jpg',
                     sizes: [
                         { size: 'M', price: 180, volume: '350 мл' },
                         { size: 'L', price: 210, volume: '450 мл' }
                     ]
                 },
                 {
-                    id: 6,
+                    id: 14,
+                    name: 'Ананас-Вишня',
+                    category: 'tea',
+                    categoryIcon: '🫖',
+                    description: 'Тропический микс сладости и игривой кислинки.',
+                    image: '/images/pineapple-tea.jpg',
+                    sizes: [
+                        { size: 'M', price: 180, volume: '350 мл' },
+                        { size: 'L', price: 210, volume: '450 мл' }
+                    ]
+                },
+
+                // Холодные напитки
+                {
+                    id: 15,
                     name: 'Айс-Латте',
                     category: 'cold',
                     categoryIcon: '❄️',
-                    description: 'Охлаждённая нежность: лёд, молоко и эспрессо. Спасение в летний зной.',
+                    description: 'Охлаждённая нежность из молока и эспрессо.',
+                    image: '/images/ice-latte.jpg',
                     sizes: [
                         { size: 'M', price: 210, volume: '350 мл' },
                         { size: 'L', price: 260, volume: '450 мл' }
                     ]
-                }
-            ],
-            selectedSizes: {},
-            cart: []
-        }
-    },
-    computed: {
-        filteredProducts() {
-            return this.products.filter(p => p.category === this.selectedCategory);
-        },
-        // Остальные вычисляемые свойства без изменений
-    },
-    methods: {
-        selectSize(productId, size) {
-            this.selectedSizes = {
-                ...this.selectedSizes,
-                [productId]: size
-            };
-        },
-        addToCart(product) {
-            const selectedSize = this.selectedSizes[product.id];
-            if (!selectedSize) {
-                Telegram.WebApp.showAlert('Пожалуйста, выберите размер!');
-                return;
-            }
-            
-            const existing = this.cart.find(item => 
-                item.product.id === product.id && 
-                item.size.size === selectedSize.size
-            );
-            
-            if (existing) {
-                existing.quantity++;
-            } else {
-                this.cart.push({
-                    product,
-                    size: selectedSize,
-                    quantity: 1
-                });
-            }
-            
-            Telegram.WebApp.HapticFeedback.impactOccurred('light');
-        },
-        // Остальные методы с адаптацией под новую структуру
-    }
-}).mount('#app');
-</script>
-
-<style>
-/* Анимации и стили остаются без изменений */
-</style>
-</body>
-</html>
+                },
+                {
+                    id: 16,
+                    name: 'Бамбл-кофе (Апельсин)',
+                    category: 'cold',
+                    categoryIcon: '❄️',
+                    description: 'Цитрусовый взрыв в гармонии с кофе.',
+                    image: '/images/orange-coffee.jpg',
+                    sizes: [
+                        { size: 'M', price: 260, volume: '350 мл' },
+                        { size: 'L', price: 310, volume: '450 мл' }
+                    ]
+                },
+                {
+                    id: 17,
+                    name: 'Бамбл-кофе (Вишня)',
+                    category: 'cold',
+                    categoryIcon: '❄️',
+                    description: 'Игривая вишнёвая нотка с кофейной горчинкой.',
+                    image: '/images/cherry-coffee.jpg',
+                    sizes: [
+                        { size: 'M', price: 260, volume: '350 мл' },
+                        { size: 'L', price: 310, volume: '450 мл' }
+                    ]
+               
