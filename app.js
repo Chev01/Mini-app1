@@ -1,195 +1,158 @@
-const tg = window.Telegram.WebApp;
-tg.expand();
-tg.enableClosingConfirmation();
-
-document.getElementById('close-app').addEventListener('click', () => tg.close());
-
-const menuData = [
-    {
-        category: "Классические кофейные напитки",
-        sizes: ["S (250 мл)", "M (350 мл)", "L (450 мл)"],
-        items: [
-            {
-                name: "Эспрессо",
-                customSize: "60 мл",
-                prices: ["120 ₽"],
-                desc: "Интенсивный, как утро понедельника. Идеальная база для тех, кто ценит чистый вкус кофе."
-            },
-            {
-                name: "Американо",
-                prices: ["140 ₽", "160 ₽", "180 ₽"],
-                desc: "Лёгкий, прозрачный, с нотками карамели. Для тех, кто не спешит, но хочет взбодриться."
-            },
-            {
-                name: "Капучино",
-                prices: ["160 ₽", "210 ₽", "260 ₽"],
-                desc: "Воздушная пенка, бархатное молоко и идеальный баланс. Как объятие в чашке."
-            },
-            {
-                name: "Латте",
-                prices: ["160 ₽", "210 ₽", "260 ₽"],
-                desc: "Нежный, сливочный, с деликатной пенкой. Для тех, кто любит кофе 'в обнимку с молоком'."
-            },
-            {
-                name: "Раф",
-                prices: ["160 ₽", "210 ₽", "260 ₽"],
-                desc: "Сливочно-ванильное облако с лёгкой горчинкой. Напиток для романтиков и сладкоежек."
-            },
-            {
-                name: "Флэт-Уайт",
-                prices: ["260 ₽ (S)", "360 ₽ (L)"],
-                desc: "Плотный, насыщенный, с шелковистой текстурой. Кофе, который говорит: 'Я серьёзный, но обаятельный'."
-            },
-            {
-                name: "Мокко",
-                prices: ["260 ₽ (M)", "310 ₽ (L)"],
-                desc: "Шоколадный взрыв с карамельными нотками. Десерт, который можно пить."
-            }
-        ]
-    },
-    {
-        category: "Без кофеина",
-        sizes: ["S (250 мл)", "M (350 мл)", "L (450 мл)"],
-        items: [
-            {
-                name: "Матча-Латте",
-                prices: ["210 ₽", "260 ₽", "310 ₽"],
-                desc: "Японская церемония в ваших руках. Травянистая свежесть и сливочная нежность."
-            },
-            {
-                name: "Какао",
-                prices: ["160 ₽", "210 ₽", "260 ₽"],
-                desc: "Детство в чашке: густой, шоколадный, с облаком зефирного крема."
-            }
-        ]
-    },
-    {
-        category: "Чайная коллекция",
-        sizes: ["M (350 мл)", "L (450 мл)"],
-        items: [
-            {
-                name: "Чёрный чай",
-                prices: ["140 ₽", "180 ₽"],
-                desc: "Классика с терпким характером. Бодрит, как первый луч солнца."
-            },
-            {
-                name: "Зелёный чай",
-                prices: ["140 ₽", "180 ₽"],
-                desc: "Свежий, травянистый, с лёгкой горчинкой. Эликсир для ясного ума."
-            },
-            {
-                name: "Молочный улун",
-                prices: ["140 ₽", "180 ₽"],
-                desc: "Тайваньская магия: сливочные ноты в обрамлении цветочного аромата."
-            },
-            {
-                name: "Малиновое утро",
-                prices: ["180 ₽", "210 ₽"],
-                desc: "Ягодный фейерверк с лёгкой кислинкой. Пробуждает лучше будильника!"
-            },
-            {
-                name: "Ананас-Вишня",
-                prices: ["180 ₽", "210 ₽"],
-                desc: "Тропики в чашке: сладость ананаса и игривая кислинка вишни."
-            }
-        ]
-    },
-    {
-        category: "Холодные напитки",
-        items: [
-            {
-                name: "Айс-Латте",
-                prices: ["210 ₽ (M)", "260 ₽ (L)"],
-                desc: "Охлаждённая нежность: лёд, молоко и эспрессо. Спасение в летний зной."
-            },
-            {
-                name: "Бамбл-кофе",
-                subItems: ["Апельсин", "Вишня"],
-                prices: ["260 ₽ (M)", "310 ₽ (L)"],
-                desc: "Фруктовый взрыв! Цитрусовый заряд или вишнёвая игривость в дуэте с кофе."
-            },
-            {
-                name: "Эспрессо-Тоник",
-                prices: ["260 ₽ (M)", "310 ₽ (L)"],
-                desc: "Горьковато-свежий тандем: тонизирующая горечь эспрессо и игристый тоник."
-            },
-            {
-                name: "Айс-Матча",
-                prices: ["280 ₽ (M)", "330 ₽ (L)"],
-                desc: "Японская прохлада: матча, лёд и сливочное молоко. Энергия без кофеина."
-            },
-            {
-                name: "Мохито",
-                prices: ["240 ₽"],
-                desc: "Освежающий микс лайма и мяты. Летний бриз в каждом глотке."
-            }
-        ]
+class CoffeeApp {
+    constructor() {
+        this.cart = [];
+        this.init();
     }
-];
 
-let cart = [];
+    init() {
+        this.showLoader();
+        this.setupEventListeners();
+        this.loadMenuData();
+    }
 
-function renderMenu() {
-    const container = document.getElementById('menu-container');
-    
-    menuData.forEach(category => {
-        const categoryHTML = `
-            <div class="category-card">
-                <h2 class="category-title">${category.category}</h2>
-                ${category.sizes ? `<div class="size-badge">${category.sizes.join(' • ')}</div>` : ''}
-                
-                <div class="items-list">
-                    ${category.items.map(item => `
-                        <div class="menu-item">
-                            <div class="item-header">
-                                <span class="item-name">${item.name}</span>
-                                <span class="price-tag">${item.prices.join(' / ')}</span>
-                            </div>
-                            <p class="item-desc">${item.desc}</p>
-                            <div class="item-controls">
-                                ${item.subItems ? `
-                                    <select class="size-select">
-                                        ${item.subItems.map(sub => `
-                                            <option>${sub}</option>
-                                        `).join('')}
-                                    </select>
-                                ` : ''}
-                                
-                                ${item.prices.length > 1 ? `
-                                    <select class="size-select">
-                                        ${item.prices.map((_,i) => `
-                                            <option>${['S','M','L'][i]}</option>
-                                        `).join('')}
-                                    </select>
-                                ` : ''}
-                                
+    showLoader() {
+        setTimeout(() => {
+            document.getElementById('loader').classList.add('hidden');
+        }, 1000);
+    }
+
+    async loadMenuData() {
+        try {
+            const response = await fetch('menu-data.json');
+            this.menuData = await response.json();
+            this.renderMenu();
+        } catch (error) {
+            this.showError('Не удалось загрузить меню');
+        }
+    }
+
+    renderMenu() {
+        const container = document.getElementById('menuContainer');
+        
+        this.menuData.forEach(category => {
+            const categoryHTML = `
+                <div class="category-card">
+                    <h2 class="category-title">${category.category}</h2>
+                    ${category.sizes ? `
+                        <div class="size-badge">
+                            ${category.sizes.join(' • ')}
+                        </div>
+                    ` : ''}
+                    
+                    <div class="category-content">
+                        ${category.items.map(item => `
+                            <div class="menu-item">
+                                <div class="item-header">
+                                    <span class="item-name">${item.name}</span>
+                                    <span class="price-tag">
+                                        ${item.prices[0]}
+                                    </span>
+                                </div>
+                                <p class="item-desc">${item.desc}</p>
+                                ${this.renderSizeSelector(item)}
                                 <button class="add-to-cart" data-item="${item.name}">
+                                    <i class="fas fa-plus"></i>
                                     Добавить
                                 </button>
                             </div>
-                        </div>
-                    `).join('')}
+                        `).join('')}
+                    </div>
                 </div>
+            `;
+            container.innerHTML += categoryHTML;
+        });
+
+        this.setupDynamicEventListeners();
+    }
+
+    renderSizeSelector(item) {
+        if (!item.prices || item.prices.length <= 1) return '';
+        
+        return `
+            <div class="size-selector">
+                ${item.prices.map((price, index) => `
+                    <div class="size-pill ${index === 0 ? 'active' : ''}" 
+                         data-price="${price}"
+                         data-size="${['S','M','L'][index]}">
+                        ${['S (250мл)','M (350мл)','L (450мл)'][index]}
+                    </div>
+                `).join('')}
             </div>
         `;
-        container.innerHTML += categoryHTML;
-    });
+    }
 
-    document.querySelectorAll('.add-to-cart').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const item = e.target.dataset.item;
-            cart.push(item);
-            updateCart();
-            tg.HapticFeedback.impactOccurred('medium');
-            btn.classList.add('added');
-            setTimeout(() => btn.classList.remove('added'), 200);
+    setupDynamicEventListeners() {
+        document.querySelectorAll('.size-pill').forEach(pill => {
+            pill.addEventListener('click', (e) => this.handleSizeSelect(e));
         });
-    });
+
+        document.querySelectorAll('.add-to-cart').forEach(btn => {
+            btn.addEventListener('click', (e) => this.handleAddToCart(e));
+        });
+
+        document.getElementById('cartButton').addEventListener('click', () => this.showCart());
+    }
+
+    handleSizeSelect(event) {
+        const pill = event.target;
+        const parent = pill.closest('.menu-item');
+        
+        parent.querySelectorAll('.size-pill').forEach(p => 
+            p.classList.remove('active'));
+        
+        pill.classList.add('active');
+        parent.querySelector('.price-tag').textContent = pill.dataset.price;
+    }
+
+    handleAddToCart(event) {
+        const button = event.target.closest('button');
+        const item = this.getSelectedItemData(button);
+        
+        this.cart.push(item);
+        this.updateCartUI();
+        this.showAddEffect(button);
+    }
+
+    getSelectedItemData(button) {
+        const itemElement = button.closest('.menu-item');
+        return {
+            name: itemElement.querySelector('.item-name').textContent,
+            size: itemElement.querySelector('.size-pill.active')?.dataset.size || 'S',
+            price: itemElement.querySelector('.price-tag').textContent
+        };
+    }
+
+    updateCartUI() {
+        document.getElementById('cartCounter').textContent = this.cart.length;
+    }
+
+    showAddEffect(button) {
+        button.classList.add('added');
+        setTimeout(() => button.classList.remove('added'), 500);
+    }
+
+    showCart() {
+        // Здесь можно реализовать панель корзины
+        alert(`В корзине: ${this.cart.length} товаров\nИтого: ${this.calculateTotal()} ₽`);
+    }
+
+    calculateTotal() {
+        return this.cart.reduce((sum, item) => {
+            return sum + parseInt(item.price.match(/\d+/)[0]);
+        }, 0);
+    }
+
+    showError(message) {
+        const errorEl = document.createElement('div');
+        errorEl.className = 'error-message';
+        errorEl.innerHTML = `
+            <i class="fas fa-exclamation-triangle"></i>
+            ${message}
+        `;
+        document.body.appendChild(errorEl);
+        setTimeout(() => errorEl.remove(), 3000);
+    }
 }
 
-function updateCart() {
-    document.querySelector('.cart-counter').textContent = cart.length;
-    tg.HapticFeedback.impactOccurred('light');
-}
-
-document.addEventListener('DOMContentLoaded', renderMenu);
+// Инициализация приложения
+document.addEventListener('DOMContentLoaded', () => new CoffeeApp());
