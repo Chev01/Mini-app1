@@ -3,24 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Чашка Кофе | Официальное приложение</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
+    <title>Чашка Кофе | Premium Coffee</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-    <div class="loader" id="loader">
-        <div class="coffee-loader"></div>
+    <div class="loader">
+        <div class="coffee-spinner"></div>
     </div>
 
     <div class="app-container">
         <header class="header">
-            <h1 class="logo">☕️ Чашка Кофе</h1>
-            <div class="cart-icon" id="cartIcon">
-                🛒 <span class="cart-counter">0</span>
+            <div class="logo">
+                <i class="fas fa-mug-hot"></i>
+                <h1>Чашка Кофе</h1>
+            </div>
+            <div class="cart-fab" id="cartButton">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="cart-counter">0</span>
             </div>
         </header>
 
-        <main class="menu" id="menuContainer"></main>
+        <main class="menu-grid" id="menuContainer"></main>
     </div>
 
     <script src="app.js"></script>
